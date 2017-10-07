@@ -1,7 +1,6 @@
 from flask import Flask, redirect, url_for, render_template, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, logout_user,\
-    current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user
 from oauth import OAuthSignIn
 
 
@@ -28,10 +27,10 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     social_id = db.Column(db.String(64), nullable=False, unique=True)
-    nickname = db.Column(db.String(64), nullable=False)
+    twitter_id = db.Column(db.String(64), nullable=False)    
     email = db.Column(db.String(64), nullable=True)
-    twitterToken = db.Column(db.String(255), nullable=True)
-    twitterSecret = db.Column(db.String(255), nullable=True)
+    strava_id = db.Column(db.String(255), nullable=True)
+    strava_access_code = db.Column(db.String(255), nullable=True)
 
 
 @lm.user_loader
@@ -69,7 +68,7 @@ def oauth_callback(provider):
         return redirect(url_for('index'))
     user = User.query.filter_by(social_id=social_id).first()
     if not user:
-        user = User(social_id=social_id, nickname=username, email=email)
+        user = User(social_id=social_id, twitter_id=username, email=email)
         db.session.add(user)
         db.session.commit()
     login_user(user, True)
