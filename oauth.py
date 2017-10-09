@@ -1,105 +1,52 @@
-from flask import Flask, redirect, url_for, render_template, flash, request
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user
-from oauth import OAuthSignIn
-from stravalib.client import Client
-import requests
+import json
+
+from rauth import OAuth1Service
+from flask import current_app, url_for, request, redirect, session
+
+class OAuthSignIn(object):
+    def __init__(self):
+        self.provider_name = 'twitter'
+        credentials = current_app.config['OAUTH_CREDENTIALS']['twitter']
+        self.consumer_id = credentials['id']
+        self.consumer_secret = credentials['secret']
+
+        self.service = OAuth1Service(
+            name='twitter',
+            consumer_key=self.consumer_id,
+            consumer_secret=self.consumer_secret,
+            request_token_url='https://api.twitter.com/oauth/request_token',
+            authorize_url='https://api.twitter.com/oauth/authorize',
+            access_token_url='https://api.twitter.com/oauth/access_token',
+            base_url='https://api.twitter.com/1.1/')
 
 
-app = Flask(__name__)
+    def authorize(self):
+        request_token = self.service.get_request_token(
+            params={'oauth_callback': self.get_callback_url()}
+        )
+        session['request_token'] = request_token
+        return redirect(self.service.get_authorize_url(request_token[0]))
 
-app.config['SECRET_KEY'] = 'top secret!'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-app.config['OAUTH_CREDENTIALS'] = {
-    'strava': {
-        'id': 'xxx',
-        'secret': 'xxx'
-    },
-    'twitter': {
-        'id': 'xxx',
-        'secret': 'xxx'
-    }
-}
+    def get_callback_url(self):
+        return url_for('oauth_callback', provider='twitter',
+                       _external=True)
 
-db = SQLAlchemy(app)
-lm = LoginManager(app)
-lm.login_view = 'index'
+    def callback(self):
+        def decode_json(payload):
+            return json.loads(payload.decode('utf-8'))
 
+        request_token = session.pop('request_token')
+        if 'oauth_verifier' not in request.args:
+            return None, None, None
 
+        oauth_session = self.service.get_auth_session(
+            request_token[0],
+            request_token[1],
+            data={'oauth_verifier': request.args['oauth_verifier']}
+        )        
+        me = oauth_session.get('account/verify_credentials.json').json()
 
+        social_id = 'twitter$' + str(me.get('id'))
+        username = me.get('screen_name')
+        return social_id, username, None                         
 
-class User(UserMixin, db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    social_id = db.Column(db.String(64), nullable=False, unique=True)
-    twitter_id = db.Column(db.String(64), nullable=False)    
-    email = db.Column(db.String(64), nullable=True)
-    strava_id = db.Column(db.String(255), nullable=True)
-    strava_access_code = db.Column(db.String(255), nullable=True)
-
-
-@lm.user_loader
-def load_user(id):
-    return User.query.get(int(id))
-
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
-
-@app.route('/token_exchange', methods=["GET","POST"])
-def token_exchange():
-    mycode = request.args.get('code')
-    strava_client_id = 'xxx'
-    strava_client_secret = 'xxx'
-
-    strava_token_uri = 'https://www.strava.com/oauth/token'
-    params = {'client_id' : strava_client_id, 'client_secret' : strava_client_secret,'code' : mycode}
-    res = requests.post(strava_token_uri, params)
-    return res.text
-
-@app.route('/authorize/strava')
-def authorize_strava():
-    strava_client_id = "xxx"
-    strava_login_uri = "https://www.strava.com/oauth/authorize?client_id="+strava_client_id+"&response_type=code&redirect_uri=http://127.0.0.1:5000/token_exchange&approval_prompt=force"
-    return redirect (strava_login_uri)
-
-@app.route('/authorize/<provider>')
-def oauth_authorize(provider):
-    if not current_user.is_anonymous:
-        return redirect(url_for('index'))
-    oauth = OAuthSignIn.get_provider(provider)
-    return oauth.authorize()
-
-
-@app.route('/callback/<provider>')
-def oauth_callback(provider):
-    if not current_user.is_anonymous:
-        return redirect(url_for('index'))
-    oauth = OAuthSignIn.get_provider(provider)
-    social_id, username, email = oauth.callback()
-
-
-    if social_id is None:
-        flash('Authentication failed.')
-        return redirect(url_for('index'))
-
-    user = User.query.filter_by(social_id=social_id).first()
-
-    if not user:
-        user = User(social_id=social_id, twitter_id=username, email=email)
-        db.session.add(user)
-        db.session.commit()
-    login_user(user, True)
-    return redirect(url_for('index'))
-
-
-if __name__ == '__main__':
-    db.create_all()
-    app.run(debug=True)
