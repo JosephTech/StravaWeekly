@@ -14,22 +14,22 @@ class Consumer:
     @property
     def client_code(self):
         #twitter
-        return 'MC9ygBK2SmoBITB4gUeLz9lLk'
+        return 'xxx'
 
     @property
     def client_secret(self):
         #twitter
-        return 'W8kW1VuLAxLOCmeMJjVurvi4tdyOn1n5ahfb44IVYX5yNx1Vcm'
+        return 'xxx'
 
     @property
     def TwitterAccessCode(self):
         #veckostat
-        return '917308663181856769-UXVltPmN9ACDTX4lrKrsYVc4UOSyIEc'
+        return 'xxx'
 
     @property
     def TwitterAccessSecret(self):
         #veckostat
-        return 'KwAM4a6DyoyKmjYcC50r2ox1C2n04jRtOaw7kdmWnxYwI'    
+        return 'xxx'    
 
 
 
@@ -42,7 +42,7 @@ class StravaUser:
 
     @property
     def StravaAccessToken(self):
-        access_token = Client().exchange_code_for_token(client_id=1237, client_secret='c63852bf687d35e062f1414ee69c49fc9d523767', code='cda0c994a35137f6433e7e717af6bfbfc1eb0f8f')
+        access_token = Client().exchange_code_for_token(client_id=999, client_secret='xxx', code='xxx')
         return access_token
 
     @property
