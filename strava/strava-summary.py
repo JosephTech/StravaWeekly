@@ -12,7 +12,7 @@ class Consumer:
 
     @property
     def client_secret(self):
-        return 'W8kW1VuLAxLOCmeMJjVurvi4tdyOn1n5ahfb44IVYX5yNx1Vcm'
+        return 'xxx'
 
 class StravaUser:
     @property
@@ -22,7 +22,7 @@ class StravaUser:
 
     @property
     def StravaAccessToken(self):
-        access_token = Client().exchange_code_for_token(client_id=1237, client_secret='c63852bf687d35e062f1414ee69c49fc9d523767', code='cda0c994a35137f6433e7e717af6bfbfc1eb0f8f')
+        access_token = Client().exchange_code_for_token(client_id=999, client_secret='xxx', code='xxx')
         return access_token
 
     @property
@@ -30,11 +30,11 @@ class StravaUser:
         return 'julesjoseph'
     @property
     def TwitterAccessCode(self):
-        return '363734147-vtVb5BBsRe3G8wujBzxoi0uNdu1NA5VeSQ781den'
+        return 'xxx'
 
     @property
     def TwitterAccessSecret(self):
-        return 'FEJUU6jv1iqxAUfBSk0oOAndXrEkJ0hlVB70bOqYgzxcM'
+        return 'xxx'
 
 #date helper methods		
 def GetCurrentDate():
