@@ -37,7 +37,7 @@ class StravaUser:
     @property
     def StravaUserId(self):
 		#julesjoseph
-        return 108191
+        return 99999
 
     @property
     def StravaAccessToken(self):
